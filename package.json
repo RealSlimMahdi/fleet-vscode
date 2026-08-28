@@ -68,6 +68,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:unit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test 'test/**/*.test.ts'",
+    "compile:integration": "tsc -p tsconfig.integration.json",
+    "test:integration": "npm run bundle && npm run compile:integration && vscode-test",
+    "fixture": "node scripts/build-fixture.mjs",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run test:unit",
     "package": "vsce package"
   },
@@ -76,14 +79,18 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.82.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.2.0",
     "esbuild": "^0.25.0",
     "eslint": "^9.15.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.3.0",
     "typescript": "^5.9.0",
-    "typescript-eslint": "^8.15.0"
+    "typescript-eslint": "^8.15.0",
+    "yaml": "^2.9.0"
   }
 }

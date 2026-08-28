@@ -7,7 +7,12 @@ export default tseslint.config(
   { ignores: ["out/**", ".vscode-test/**", "esbuild.js"] },
   eslint.configs.recommended,
   {
-    files: ["src/**/*.ts", "test/**/*.ts"],
+    // Node-only ESM: config and generator scripts, never bundled.
+    files: ["*.mjs", "scripts/**/*.mjs"],
+    languageOptions: { globals: { console: "readonly", process: "readonly" } },
+  },
+  {
+    files: ["src/**/*.ts", "test/**/*.ts", "integration/**/*.ts"],
     extends: [tseslint.configs.recommendedTypeChecked],
     languageOptions: {
       parserOptions: {
@@ -21,8 +26,8 @@ export default tseslint.config(
     },
   },
   {
-    // `describe`/`it` return promises that the test runner, not us, awaits.
-    files: ["test/**/*.ts"],
+    // `describe`/`it`/`test` return promises that the test runner, not us, awaits.
+    files: ["test/**/*.ts", "integration/**/*.ts"],
     rules: { "@typescript-eslint/no-floating-promises": "off" },
   },
   prettier,

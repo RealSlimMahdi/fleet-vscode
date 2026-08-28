@@ -1,0 +1,87 @@
+# Fixture for the Extension Development Host — generated, do not edit.
+# Regenerate with `npm run fixture` (slices 3 codelists and the
+# first 6 EX variables out of the canonical study).
+study:
+  id: test-study
+  name: test-study
+  description: "This is a test study to demonstrate the use of the SDTMIG define
+    specification in Fleet. It includes three domains: EX (Exposure), AE
+    (Adverse Events), and VS (Vital Signs). The metadata defines the structure
+    of each domain, including variables, codelists, and other attributes."
+  protocol_name: test-study
+  originator: Roche
+  source_system: Fleet
+  source_system_version: 0.1.0
+  standard: SDTMIG
+  standard_version: "3.4"
+  ct_version: "2023-12-15"
+codelists:
+  - oid: C71620
+    name: C71620
+    type: text
+  - oid: C66726
+    name: C66726
+    type: text
+  - oid: C71113
+    name: C71113
+    type: text
+datasets:
+  - name: EX
+    label: Exposure
+    structure: An interventions domain that contains the details of a subject's
+      exposure to protocol-specified study treatment. Study treatment may be any
+      intervention that is prospectively defined as a test material within a
+      study, and is typically but not always supplied to the subject.
+    repeating: true
+    keys:
+      - STUDYID
+      - DOMAIN
+      - USUBJID
+      - EXSEQ
+    variables:
+      - name: STUDYID
+        label: Study Identifier
+        type: text
+        length: 200
+        mandatory: true
+        core: Req
+        origin: Assigned
+      - name: DOMAIN
+        label: Domain Abbreviation
+        type: text
+        length: 200
+        mandatory: true
+        core: Req
+        origin: Assigned
+      - name: USUBJID
+        label: Unique Subject Identifier
+        type: text
+        length: 200
+        mandatory: true
+        core: Req
+        origin: CRF
+      - name: EXSEQ
+        label: Sequence Number
+        type: float
+        mandatory: true
+        core: Req
+        origin: CRF
+      - name: EXGRPID
+        label: Group ID
+        type: text
+        length: 200
+        mandatory: false
+        core: Perm
+        origin: Derived
+      - name: EXREFID
+        label: Reference ID
+        type: text
+        length: 200
+        mandatory: false
+        core: Perm
+        origin: Assigned
+        cosmos:
+          origin: Assigned
+    cosmos_bc: Study Product Administration (Exposure, Study Treatment Administration)
+    cosmos_bc_definition: The act of the dispensing, applying, or tendering a study
+      product to the participant.

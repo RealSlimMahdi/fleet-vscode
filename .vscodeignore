@@ -3,11 +3,14 @@
 .vscode-test*
 src/**
 test/**
-test-fixtures/**
-out/test/**
+integration/**
+fixture/**
+scripts/**
+out/integration/**
 node_modules/**
 package-lock.json
 tsconfig.json
+tsconfig.integration.json
 eslint.config.mjs
 esbuild.js
 .editorconfig

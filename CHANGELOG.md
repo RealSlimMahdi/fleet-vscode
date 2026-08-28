@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is missing or fails to start.
 - Unit tests (`npm run test:unit`) covering discovery precedence on POSIX and Windows
   layouts and the version contract.
+- Committed `fixture/` study, generated from the canonical study by `npm run fixture`,
+  so a bare clone has something to launch against.
+- Two launch configurations: **Run Extension (fixture)** and
+  **Run Extension (../test-study)**.
+- Extension Host activation test (`npm run test:integration`) against the fixture.
+- CI: type-check, lint, format-check and unit tests on Ubuntu, macOS and Windows, plus
+  the Extension Host test on Ubuntu.
 
 ### Changed
 
