@@ -1,0 +1,61 @@
+name: Bug report
+description: Something in the extension misbehaves.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Diagnostics, completions and hover come from the Fleet language server in
+        [`fleet-cdisc`](https://github.com/RealSlimMahdi/fleet-cdisc). If a *derivation*
+        or *algorithm* is wrong, report it there instead.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you expected, and what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a workspace containing define.yaml
+        2. ...
+    validations:
+      required: true
+
+  - type: input
+    id: extension-version
+    attributes:
+      label: Extension version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: fleet-version
+    attributes:
+      label: Fleet version
+      description: Output of `fleet --version` in the workspace environment.
+    validations:
+      required: true
+
+  - type: input
+    id: vscode-version
+    attributes:
+      label: VS Code version and OS
+      placeholder: "1.95.0, macOS 15.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server log
+      description: |
+        Open the **Fleet CDISC** output channel, reproduce, and paste it here.
+        Automatically formatted as code.
+      render: shell

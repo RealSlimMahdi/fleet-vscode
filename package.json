@@ -1,0 +1,58 @@
+{
+  "name": "fleet-vscode",
+  "displayName": "Fleet CDISC",
+  "description": "Language support for Fleet define.yaml specifications: schema diagnostics, algorithm/codelist completions, and hover docs.",
+  "version": "0.1.0",
+  "publisher": "fleet-vscode",
+  "license": "MIT",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RealSlimMahdi/fleet-vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/RealSlimMahdi/fleet-vscode/issues"
+  },
+  "engines": {
+    "vscode": "^1.82.0",
+    "node": ">=22.18.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/define.yaml",
+    "onLanguage:yaml"
+  ],
+  "main": "./out/extension.js",
+  "vsce": {
+    "dependencies": false
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run bundle",
+    "bundle": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run typecheck && npm run lint && npm run format:check",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.82.0",
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.15.0"
+  }
+}

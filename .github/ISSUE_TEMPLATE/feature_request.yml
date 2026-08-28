@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest an improvement to the VS Code client.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This repository is the **editor client** only. New algorithms, schema rules or
+        codelist behaviour belong in
+        [`fleet-cdisc`](https://github.com/RealSlimMahdi/fleet-cdisc).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation you hit, not just the feature you want.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What should it do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

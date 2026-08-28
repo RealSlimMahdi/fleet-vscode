@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Fleet (server, algorithms, define.yaml)
+    url: https://github.com/RealSlimMahdi/fleet-cdisc/issues
+    about: Diagnostics content, algorithms, schema and CDISC behaviour live in Fleet.
