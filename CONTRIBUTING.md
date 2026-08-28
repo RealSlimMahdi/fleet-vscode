@@ -22,18 +22,40 @@ Development Host, which is enough to see the extension activate.
 
 ## Commands
 
-| Command                    | Purpose                                                      |
-| -------------------------- | ------------------------------------------------------------ |
-| `npm run check`            | Type-check, lint, format-check, unit tests — the CI gate.    |
-| `npm run typecheck`        | `tsc --noEmit`. esbuild emits; TypeScript only checks types. |
-| `npm run lint`             | ESLint with type-aware rules.                                |
-| `npm run format`           | Rewrite with Prettier (`format:check` to verify only).       |
-| `npm run test:unit`        | `node --test` over `test/**/*.test.ts`, no Extension Host.   |
-| `npm run test:integration` | Extension Host activation test against `fixture/`.           |
-| `npm run fixture`          | Regenerate `fixture/` from the canonical study.              |
-| `npm run bundle`           | Bundle `src/extension.ts` → `out/extension.js` with esbuild. |
-| `npm run watch`            | Rebuild on change.                                           |
-| `npm run package`          | Build a `.vsix` with `vsce`.                                 |
+| Command                     | Purpose                                                      |
+| --------------------------- | ------------------------------------------------------------ |
+| `npm run check`             | Type-check, lint, format-check, unit tests — the CI gate.    |
+| `npm run typecheck`         | `tsc --noEmit`. esbuild emits; TypeScript only checks types. |
+| `npm run lint`              | ESLint with type-aware rules.                                |
+| `npm run format`            | Rewrite with Prettier (`format:check` to verify only).       |
+| `npm run test:unit`         | `node --test` over `test/**/*.test.ts`, no Extension Host.   |
+| `npm run test:integration`  | Extension Host activation test against `fixture/`.           |
+| `npm run fixture`           | Regenerate `fixture/` from the canonical study.              |
+| `npm run bundle`            | Bundle `src/extension.ts` → `out/extension.js` with esbuild. |
+| `npm run watch`             | Rebuild on change.                                           |
+| `npm run package`           | Build a `.vsix` with `vsce`, then verify its contents.       |
+| `npm run release:preflight` | Refuse to release while Fleet ships no `lsp` extra.          |
+
+## Releasing
+
+Releases are manual. The **Release** workflow is `workflow_dispatch` only and defaults to a
+dry run; the publishing job sits behind the protected `release` environment, so a reviewer
+approves before either registry is touched.
+
+Both registries receive the _same_ artifact the build job verified, through OIDC trusted
+publishing — `vsce publish --oidc` and `ovsx publish --trusted-publishing` — so no
+Marketplace or Open VSX token is stored anywhere. Each needs a trusted publisher registered
+for this repository and workflow on the respective registry first.
+
+Two things still gate the first real release:
+
+- **Fleet.** The build job runs `npm run release:preflight`, which fails while the newest
+  `fleet-cdisc` on PyPI declares no `lsp` extra. Today it does not, so the extension would
+  have no language server to start.
+- **The publishing CLIs.** `--oidc` and `--trusted-publishing` are implemented upstream but
+  unreleased as of `@vscode/vsce` 3.9.2 and `ovsx` 1.1.1. The workflow is written against
+  the target design; until those land it fails on an unknown option, having published
+  nothing.
 
 ## The fixture
 

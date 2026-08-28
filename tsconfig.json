@@ -10,5 +10,5 @@
     "erasableSyntaxOnly": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["src", "test", "integration"]
+  "include": ["src", "test", "integration", "scripts"]
 }

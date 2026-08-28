@@ -50,3 +50,26 @@ jobs:
 
       - name: Extension Host activation test
         run: xvfb-run -a npm run test:integration
+
+  # One inspectable artifact per pull request, checked before it is uploaded.
+  package:
+    name: Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Package and verify the VSIX
+        run: npm run package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fleet-vscode-vsix
+          path: "*.vsix"
+          if-no-files-found: error

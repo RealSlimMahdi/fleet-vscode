@@ -35,7 +35,7 @@ The extension locates the server in this order:
 If none of them yields a working server, the extension says so with a notification rather
 than going quiet.
 
-Fleet **0.1.0 or newer** is required. An older major is refused, an older minor warns, and
+Fleet **0.1.1 or newer** is required. An older major is refused, an older minor warns, and
 an unrecognisable version — an editable development install, say — is logged and trusted.
 
 ## Settings and commands

@@ -8,11 +8,11 @@ export default tseslint.config(
   eslint.configs.recommended,
   {
     // Node-only ESM: config and generator scripts, never bundled.
-    files: ["*.mjs", "scripts/**/*.mjs"],
+    files: ["*.mjs", "scripts/**/*.mjs", "scripts/**/*.ts"],
     languageOptions: { globals: { console: "readonly", process: "readonly" } },
   },
   {
-    files: ["src/**/*.ts", "test/**/*.ts", "integration/**/*.ts"],
+    files: ["src/**/*.ts", "test/**/*.ts", "integration/**/*.ts", "scripts/**/*.ts"],
     extends: [tseslint.configs.recommendedTypeChecked],
     languageOptions: {
       parserOptions: {

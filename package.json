@@ -10,8 +10,15 @@
     "type": "git",
     "url": "https://github.com/RealSlimMahdi/fleet-vscode"
   },
+  "homepage": "https://github.com/RealSlimMahdi/fleet-vscode#readme",
   "bugs": {
     "url": "https://github.com/RealSlimMahdi/fleet-vscode/issues"
+  },
+  "qna": "https://github.com/RealSlimMahdi/fleet-vscode/issues",
+  "pricing": "Free",
+  "galleryBanner": {
+    "color": "#1F2430",
+    "theme": "dark"
   },
   "engines": {
     "vscode": "^1.82.0",
@@ -20,6 +27,16 @@
   "categories": [
     "Programming Languages",
     "Linters"
+  ],
+  "keywords": [
+    "cdisc",
+    "sdtm",
+    "adam",
+    "define-xml",
+    "clinical-trials",
+    "fleet",
+    "yaml",
+    "language-server"
   ],
   "activationEvents": [
     "workspaceContains:**/define.yaml",
@@ -72,7 +89,8 @@
     "test:integration": "npm run bundle && npm run compile:integration && vscode-test",
     "fixture": "node scripts/build-fixture.mjs",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run test:unit",
-    "package": "vsce package"
+    "package": "vsce package && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-vsix.ts",
+    "release:preflight": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-fleet-release.ts"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
@@ -82,15 +100,18 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.82.0",
+    "@types/yauzl": "^3.4.0",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.1.0",
     "@vscode/vsce": "^3.2.0",
     "esbuild": "^0.25.0",
     "eslint": "^9.15.0",
     "eslint-config-prettier": "^9.1.0",
+    "ovsx": "^1.1.1",
     "prettier": "^3.3.0",
     "typescript": "^5.9.0",
     "typescript-eslint": "^8.15.0",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.0",
+    "yauzl": "^3.4.0"
   }
 }

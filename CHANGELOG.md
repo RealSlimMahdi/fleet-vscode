@@ -24,10 +24,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extension Host activation test (`npm run test:integration`) against the fixture.
 - CI: type-check, lint, format-check and unit tests on Ubuntu, macOS and Windows, plus
   the Extension Host test on Ubuntu.
+- Packaging check (`npm run package`) asserting the VSIX contents and metadata, uploaded
+  as an artifact on every pull request.
+- Manual, protected release workflow publishing one verified VSIX to the VS Code
+  Marketplace and Open VSX through OIDC trusted publishing — no stored registry tokens.
+- Release preflight (`npm run release:preflight`) blocking publication until `fleet-cdisc`
+  on PyPI ships the `lsp` extra.
+- Marketplace listing metadata: keywords, gallery banner, pricing, homepage and Q&A links.
 
 ### Changed
 
 - `FLEET_LSP` now ranks below `fleet.server.path` and above the workspace virtualenv.
+- Minimum Fleet raised to `0.1.1`; the published `0.1.0` carries no language server.
 
 ## [0.1.0] — extracted from RealSlimMahdi/fleet-cdisc
 

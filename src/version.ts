@@ -4,8 +4,14 @@
 // version (fleet-cdisc ADR-0001), so the client declares a minimum and never
 // a maximum. Never import `vscode` here: it must run under `node --test`.
 
-/** Oldest Fleet release carrying `fleet.introspect` and the `lsp` extra. */
-export const MINIMUM_FLEET_VERSION = "0.1.0";
+/**
+ * Oldest Fleet release carrying `fleet.introspect` and the `lsp` extra.
+ *
+ * The published `0.1.0` predates both. The contract compares major.minor only,
+ * so this does not refuse it — `scripts/verify-fleet-release.ts` is what keeps
+ * the extension off the Marketplaces until Fleet ships a usable release.
+ */
+export const MINIMUM_FLEET_VERSION = "0.1.1";
 
 export type VersionVerdict =
   | { kind: "ok" }

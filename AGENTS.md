@@ -34,6 +34,8 @@ TypeScript:
 | `integration/`              | Extension Host tests, compiled to `out/integration/`               |
 | `fixture/`                  | Generated study workspace — **never hand-edit**                    |
 | `scripts/build-fixture.mjs` | Reslices `fixture/` from the canonical study                       |
+| `scripts/vsix.ts`           | What a shippable `.vsix` must contain — unit-tested                |
+| `scripts/fleet-release.ts`  | The publication gate: Fleet must ship the `lsp` extra              |
 
 `src/server.ts` and `src/version.ts` staying free of `vscode` is what makes them
 unit-testable outside the Extension Host. Keep it that way. The two test trees are
@@ -51,5 +53,6 @@ npm run check            # typecheck + lint + format:check + unit tests
 npm run test:integration # Extension Host activation, needs a display
 npm run fixture          # reslice fixture/ from ../test-study (or $FLEET_STUDY)
 npm run bundle
-npm run package          # .vsix
+npm run package          # .vsix, then verify its contents
+npm run release:preflight # blocks while fleet-cdisc on PyPI has no `lsp` extra
 ```

@@ -1,0 +1,81 @@
+name: Release
+
+# Manual only. Publishing is a deliberate act, not a consequence of a push.
+on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Build and verify the VSIX without publishing it
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Builds the one artifact both registries receive. Nothing here can publish.
+  build:
+    name: Build and verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Refuse to build while Fleet ships no language server
+        run: npm run release:preflight
+
+      - run: npm run check
+
+      - name: Package and verify the VSIX
+        run: npm run package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fleet-vscode-vsix
+          path: "*.vsix"
+          if-no-files-found: error
+
+  # `environment: release` is where the protection lives: configure required
+  # reviewers on it so a human approves before either registry is touched.
+  publish:
+    name: Publish
+    needs: build
+    if: inputs.dry-run == false
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write # OIDC: both registries exchange this for a short-lived token
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: fleet-vscode-vsix
+
+      - name: Resolve the verified VSIX
+        id: vsix
+        run: echo "path=$(ls *.vsix)" >> "$GITHUB_OUTPUT"
+
+      # Both flags exist upstream but are unreleased as of vsce 3.9.2 / ovsx
+      # 1.1.1, so the first real release waits on those CLIs as well as on
+      # Fleet. Until then this job fails on an unknown option, having published
+      # nothing — which is the safe direction.
+      - name: Publish to the VS Code Marketplace
+        run: npx @vscode/vsce publish --oidc --packagePath "${{ steps.vsix.outputs.path }}"
+
+      - name: Publish to Open VSX
+        run: npx ovsx publish --trusted-publishing "${{ steps.vsix.outputs.path }}"
