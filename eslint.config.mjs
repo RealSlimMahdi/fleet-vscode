@@ -7,7 +7,7 @@ export default tseslint.config(
   { ignores: ["out/**", ".vscode-test/**", "esbuild.js"] },
   eslint.configs.recommended,
   {
-    files: ["src/**/*.ts"],
+    files: ["src/**/*.ts", "test/**/*.ts"],
     extends: [tseslint.configs.recommendedTypeChecked],
     languageOptions: {
       parserOptions: {
@@ -19,6 +19,11 @@ export default tseslint.config(
       // Node's type stripping needs `import type` erased at parse time.
       "@typescript-eslint/consistent-type-imports": "error",
     },
+  },
+  {
+    // `describe`/`it` return promises that the test runner, not us, awaits.
+    files: ["test/**/*.ts"],
+    rules: { "@typescript-eslint/no-floating-promises": "off" },
   },
   prettier,
 );

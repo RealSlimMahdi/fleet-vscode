@@ -27,9 +27,26 @@ uv sync --extra lsp        # or: uv pip install 'fleet-cdisc[lsp]'
 
 The extension locates the server in this order:
 
-1. The `FLEET_LSP` environment variable — an absolute path to a `fleet` executable.
-2. `<workspace>/.venv/bin/fleet` (`.venv\Scripts\fleet.exe` on Windows).
-3. `uv run fleet`, which resolves the project environment.
+1. The `fleet.server.path` setting — a path to a `fleet` executable.
+2. The `FLEET_LSP` environment variable — the escape hatch for a Fleet worktree.
+3. `<workspace>/.venv/bin/fleet` (`.venv\Scripts\fleet.exe` on Windows).
+4. `uv run fleet`, which resolves the project environment.
+
+If none of them yields a working server, the extension says so with a notification rather
+than going quiet.
+
+Fleet **0.1.0 or newer** is required. An older major is refused, an older minor warns, and
+an unrecognisable version — an editable development install, say — is logged and trusted.
+
+## Settings and commands
+
+| Setting              | Purpose                                            |
+| -------------------- | -------------------------------------------------- |
+| `fleet.server.path`  | Explicit `fleet` executable; overrides discovery.  |
+| `fleet.trace.server` | `off` \| `messages` \| `verbose` protocol tracing. |
+
+**Fleet CDISC: Restart Language Server** restarts the server, picking up a changed
+`fleet.server.path` or a reinstalled environment.
 
 ## Contributing
 

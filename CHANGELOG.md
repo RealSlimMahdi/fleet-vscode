@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `fleet.server.path` setting, taking precedence over every other discovery step.
+- `fleet.trace.server` setting and the **Fleet CDISC: Restart Language Server** command.
+- Minimum Fleet version enforced from the `initialize` handshake: a lower major refuses,
+  a lower minor warns, unrecognisable metadata is logged only, and newer is accepted.
+- Actionable error notification, with **Show Log** and **Open Settings**, when the server
+  is missing or fails to start.
+- Unit tests (`npm run test:unit`) covering discovery precedence on POSIX and Windows
+  layouts and the version contract.
+
+### Changed
+
+- `FLEET_LSP` now ranks below `fleet.server.path` and above the workspace virtualenv.
+
 ## [0.1.0] — extracted from RealSlimMahdi/fleet-cdisc
 
 ### Added

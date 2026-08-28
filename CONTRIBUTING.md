@@ -24,10 +24,11 @@ Host against a workspace of your own that contains a `define.yaml`.
 
 | Command             | Purpose                                                      |
 | ------------------- | ------------------------------------------------------------ |
-| `npm run check`     | Type-check, lint, and format-check — the CI gate.            |
+| `npm run check`     | Type-check, lint, format-check, unit tests — the CI gate.    |
 | `npm run typecheck` | `tsc --noEmit`. esbuild emits; TypeScript only checks types. |
 | `npm run lint`      | ESLint with type-aware rules.                                |
 | `npm run format`    | Rewrite with Prettier (`format:check` to verify only).       |
+| `npm run test:unit` | `node --test` over `test/**/*.test.ts`, no Extension Host.   |
 | `npm run bundle`    | Bundle `src/extension.ts` → `out/extension.js` with esbuild. |
 | `npm run watch`     | Rebuild on change.                                           |
 | `npm run package`   | Build a `.vsix` with `vsce`.                                 |
@@ -37,8 +38,13 @@ Host against a workspace of your own that contains a `define.yaml`.
 The extension needs a workspace containing a `define.yaml` and a Fleet install carrying the
 `lsp` extra. Point it at one of:
 
+- the `fleet.server.path` setting, which wins over everything else,
+- the `FLEET_LSP` environment variable, which is the escape hatch for a Fleet worktree,
 - any Fleet study checkout with `.venv/bin/fleet` present, or
-- the `FLEET_LSP` environment variable, which is the escape hatch for a Fleet worktree.
+- a `uv` project, where `uv run fleet` resolves the environment.
+
+Set `fleet.trace.server` to `verbose` and run **Fleet CDISC: Restart Language Server** to
+watch the protocol traffic in the _Fleet CDISC_ output channel.
 
 ## House rules
 

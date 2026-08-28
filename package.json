@@ -26,6 +26,36 @@
     "onLanguage:yaml"
   ],
   "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Fleet CDISC",
+      "properties": {
+        "fleet.server.path": {
+          "type": "string",
+          "default": "",
+          "scope": "machine-overridable",
+          "markdownDescription": "Path to the `fleet` executable to run as the language server. Takes precedence over the `FLEET_LSP` environment variable, the workspace `.venv`, and the `uv run fleet` fallback. Leave empty to use that discovery order."
+        },
+        "fleet.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the Fleet language server."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "fleet.restartServer",
+        "title": "Restart Language Server",
+        "category": "Fleet CDISC"
+      }
+    ]
+  },
   "vsce": {
     "dependencies": false
   },
@@ -37,7 +67,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run typecheck && npm run lint && npm run format:check",
+    "test:unit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test 'test/**/*.test.ts'",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test:unit",
     "package": "vsce package"
   },
   "dependencies": {

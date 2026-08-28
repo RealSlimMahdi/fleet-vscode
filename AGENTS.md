@@ -29,15 +29,20 @@ TypeScript:
 | ------------------ | ------------------------------------------------------------------ |
 | `src/extension.ts` | `activate` / `deactivate`, `LanguageClient` construction, error UX |
 | `src/server.ts`    | `discoverServer()` — pure, exported, **no `vscode` import**        |
+| `src/version.ts`   | Minimum-Fleet contract — pure, **no `vscode` import**              |
+| `test/`            | `node --test` units over `src/server.ts` and `src/version.ts`      |
 
-`src/server.ts` staying free of `vscode` is what makes it unit-testable outside the
-Extension Host. Keep it that way.
+`src/server.ts` and `src/version.ts` staying free of `vscode` is what makes them
+unit-testable outside the Extension Host. Keep it that way.
+
+The `LanguageClient` id is `fleet` because `vscode-languageclient` reads
+`<id>.trace.server`; renaming it silently breaks the `fleet.trace.server` setting.
 
 ## Verified Commands
 
 ```bash
 npm ci
-npm run check      # typecheck + lint + format:check
+npm run check      # typecheck + lint + format:check + unit tests
 npm run bundle
 npm run package    # .vsix
 ```
