@@ -10,6 +10,19 @@ updates:
         update-types:
           - minor
           - patch
+    # Three majors are pinned by a compatibility contract, not by inertia, so
+    # they have to be raised deliberately alongside the thing that constrains
+    # them. Left ungated, each one silently breaks a promise the manifest makes.
+    ignore:
+      # typescript-eslint has no release that accepts TypeScript 7 yet.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # v10 requires VS Code ^1.91.0; the manifest advertises ^1.82.0.
+      - dependency-name: vscode-languageclient
+        update-types: ["version-update:semver-major"]
+      # Types must track the Node in .nvmrc and engines.node, not run ahead.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
