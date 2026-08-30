@@ -109,7 +109,7 @@
     "eslint-config-prettier": "^9.1.0",
     "ovsx": "^1.1.1",
     "prettier": "^3.3.0",
-    "typescript": "^5.9.0",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.15.0",
     "yaml": "^2.9.0",
     "yauzl": "^3.4.0"
