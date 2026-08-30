@@ -10,6 +10,13 @@ updates:
         update-types:
           - minor
           - patch
+      # @eslint/js pins `eslint: ^10.0.0`, so a solo bump of either cannot
+      # install. They have to be proposed, tested, and merged as one unit.
+      eslint:
+        patterns:
+          - eslint
+          - "@eslint/*"
+          - eslint-config-*
     # Three majors are pinned by a compatibility contract, not by inertia, so
     # they have to be raised deliberately alongside the thing that constrains
     # them. Left ungated, each one silently breaks a promise the manifest makes.
