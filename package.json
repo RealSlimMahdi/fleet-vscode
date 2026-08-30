@@ -106,7 +106,7 @@
     "@vscode/vsce": "^3.2.0",
     "esbuild": "^0.28.2",
     "eslint": "^9.15.0",
-    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-prettier": "^10.1.8",
     "ovsx": "^1.1.1",
     "prettier": "^3.3.0",
     "typescript": "^5.9.0",
