@@ -1,7 +1,7 @@
 {
   "name": "fleet-vscode",
   "displayName": "Fleet CDISC",
-  "description": "Language support for Fleet define.yaml specifications: schema diagnostics, algorithm/codelist completions, and hover docs.",
+  "description": "Fleet study workbench for clinical programmers: define.yaml language support, dataset runs, QC comparison, validation, Define-XML, impact analysis and spec-to-code navigation.",
   "version": "0.1.0",
   "publisher": "fleet-vscode",
   "license": "MIT",
@@ -21,12 +21,14 @@
     "theme": "dark"
   },
   "engines": {
-    "vscode": "^1.82.0",
+    "vscode": "^1.101.0",
     "node": ">=22.18.0"
   },
   "categories": [
     "Programming Languages",
-    "Linters"
+    "Linters",
+    "Data Science",
+    "AI"
   ],
   "keywords": [
     "cdisc",
@@ -36,12 +38,24 @@
     "clinical-trials",
     "fleet",
     "yaml",
-    "language-server"
+    "language-server",
+    "mcp"
   ],
   "activationEvents": [
-    "workspaceContains:**/define.yaml",
+    "workspaceContains:**/study_config.yaml",
+    "workspaceContains:**/define*.yaml",
     "onLanguage:yaml"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Fleet runs the study's Python environment and executes derivations."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Fleet needs a local filesystem and Python environment."
+    }
+  },
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
@@ -51,7 +65,7 @@
           "type": "string",
           "default": "",
           "scope": "machine-overridable",
-          "markdownDescription": "Path to the `fleet` executable to run as the language server. Takes precedence over the `FLEET_LSP` environment variable, the workspace `.venv`, and the `uv run fleet` fallback. Leave empty to use that discovery order."
+          "markdownDescription": "Path to the `fleet` executable used for language support and study commands. Takes precedence over the `FLEET_LSP` environment variable, the workspace `.venv`, and the `uv run fleet` fallback. Leave empty to use that discovery order."
         },
         "fleet.trace.server": {
           "type": "string",
@@ -70,6 +84,239 @@
         "command": "fleet.restartServer",
         "title": "Restart Language Server",
         "category": "Fleet CDISC"
+      },
+      {
+        "command": "fleet.refresh",
+        "title": "Refresh Study",
+        "category": "Fleet CDISC",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "fleet.newStudy",
+        "title": "New Study…",
+        "category": "Fleet CDISC"
+      },
+      {
+        "command": "fleet.check",
+        "title": "Check Study",
+        "category": "Fleet CDISC",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "fleet.doctor",
+        "title": "Environment Doctor",
+        "category": "Fleet CDISC",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "fleet.run",
+        "title": "Run Dataset…",
+        "category": "Fleet CDISC",
+        "icon": "$(play)"
+      },
+      {
+        "command": "fleet.validate",
+        "title": "Validate Datasets",
+        "category": "Fleet CDISC",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "fleet.compare",
+        "title": "Compare with QC…",
+        "category": "Fleet CDISC",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "fleet.checkDataset",
+        "title": "Check Dataset Against Spec",
+        "category": "Fleet CDISC",
+        "icon": "$(verify)"
+      },
+      {
+        "command": "fleet.impact",
+        "title": "What Changes Downstream?",
+        "category": "Fleet CDISC",
+        "icon": "$(type-hierarchy-sub)"
+      },
+      {
+        "command": "fleet.executionOrder",
+        "title": "Show Execution Order",
+        "category": "Fleet CDISC",
+        "icon": "$(list-ordered)"
+      },
+      {
+        "command": "fleet.defineXml",
+        "title": "Generate Define-XML",
+        "category": "Fleet CDISC",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "fleet.openProgram",
+        "title": "Open Program",
+        "category": "Fleet CDISC",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "fleet.preview",
+        "title": "Preview Report",
+        "category": "Fleet CDISC",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "fleet.openExternal",
+        "title": "Open in Browser",
+        "category": "Fleet CDISC",
+        "icon": "$(link-external)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "fleet",
+          "title": "Fleet",
+          "icon": "$(beaker)"
+        }
+      ]
+    },
+    "views": {
+      "fleet": [
+        {
+          "id": "fleet.study",
+          "name": "Study",
+          "icon": "$(beaker)",
+          "contextualTitle": "Fleet Study"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "fleet.study",
+        "contents": "No Fleet study in this workspace. A study is a folder holding a `study_config.yaml`.\n[New Study](command:fleet.newStudy)\n[Open Folder](command:vscode.openFolder)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "fleet.run",
+          "when": "view == fleet.study",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fleet.check",
+          "when": "view == fleet.study",
+          "group": "navigation@2"
+        },
+        {
+          "command": "fleet.refresh",
+          "when": "view == fleet.study",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "fleet.run",
+          "when": "view == fleet.study && viewItem == dataset",
+          "group": "inline@1"
+        },
+        {
+          "command": "fleet.openProgram",
+          "when": "view == fleet.study && viewItem == dataset",
+          "group": "inline@2"
+        },
+        {
+          "command": "fleet.compare",
+          "when": "view == fleet.study && viewItem == dataset",
+          "group": "1_qc@1"
+        },
+        {
+          "command": "fleet.checkDataset",
+          "when": "view == fleet.study && viewItem == dataset",
+          "group": "1_qc@2"
+        },
+        {
+          "command": "fleet.validate",
+          "when": "view == fleet.study && viewItem == dataset",
+          "group": "1_qc@3"
+        },
+        {
+          "command": "fleet.impact",
+          "when": "view == fleet.study && viewItem == dataset",
+          "group": "2_dag@1"
+        },
+        {
+          "command": "fleet.defineXml",
+          "when": "view == fleet.study && viewItem == spec",
+          "group": "inline@1"
+        },
+        {
+          "command": "fleet.executionOrder",
+          "when": "view == fleet.study && viewItem == study",
+          "group": "2_dag@1"
+        },
+        {
+          "command": "fleet.doctor",
+          "when": "view == fleet.study && viewItem == study",
+          "group": "3_env@1"
+        },
+        {
+          "command": "fleet.preview",
+          "when": "view == fleet.study && viewItem == report",
+          "group": "inline@1"
+        },
+        {
+          "command": "fleet.openExternal",
+          "when": "view == fleet.study && viewItem == report",
+          "group": "inline@2"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "fleet.run",
+          "when": "resourceFilename =~ /^define.*\\.ya?ml$/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "fleet.defineXml",
+          "when": "resourceFilename =~ /^define.*\\.ya?ml$/",
+          "group": "navigation@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "fleet.openExternal",
+          "when": "false"
+        }
+      ]
+    },
+    "taskDefinitions": [
+      {
+        "type": "fleet",
+        "required": [
+          "command"
+        ],
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Fleet subcommand: check, doctor, run, validate, compare, define-xml, tlg…"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Extra arguments passed after the subcommand."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Directory to run in — the study root holding study_config.yaml. Defaults to the workspace folder."
+          }
+        }
+      }
+    ],
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "fleet.mcp",
+        "label": "Fleet"
       }
     ]
   },
@@ -93,13 +340,15 @@
     "release:preflight": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-fleet-release.ts"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1"
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "vscode-languageclient": "^9.0.1",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.18.0",
-    "@types/vscode": "^1.82.0",
+    "@types/vscode": "~1.101.0",
     "@types/yauzl": "^3.4.0",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.1.0",
@@ -111,7 +360,6 @@
     "prettier": "^3.3.0",
     "typescript": "^5.9.0",
     "typescript-eslint": "^8.15.0",
-    "yaml": "^2.9.0",
     "yauzl": "^3.4.0"
   }
 }

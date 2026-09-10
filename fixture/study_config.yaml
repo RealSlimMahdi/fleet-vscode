@@ -1,0 +1,14 @@
+# Fixture for the Extension Development Host — generated, do not edit.
+study_id: test-study
+paths:
+  raw_data: data/raw
+  sdtm_data: data/sdtm
+  adam_data: data/adam
+  metadata_sdtm: metadata/sdtm
+  metadata_adam: metadata/adam
+  define_xml: metadata
+  outputs: outputs
+  programs_sdtm: programs/sdtm
+  programs_adam: programs/adam
+  programs_tlg: programs/tlg
+  programs_misc: programs/misc

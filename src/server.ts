@@ -32,6 +32,22 @@ const SERVER_ARGS = ["lsp", "--stdio"];
 const RUNNER_ARGS = ["run", "fleet"];
 
 /**
+ * The same `fleet` executable the language server uses, with other
+ * arguments — so study commands run in the environment that serves the
+ * editor, never a second one.
+ */
+export function discoverFleetCommand(
+  args: readonly string[],
+  options: DiscoveryOptions = {},
+): ServerCommand {
+  const server = discoverServer(options);
+  return {
+    ...server,
+    args: server.source === "runner" ? [...RUNNER_ARGS, ...args] : [...args],
+  };
+}
+
+/**
  * Resolve the `fleet` executable that should serve this workspace.
  *
  * Precedence: the configured server path, the `FLEET_LSP` worktree escape

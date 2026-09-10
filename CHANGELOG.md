@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Study workbench.** A Fleet view (study → standard → dataset → variable, plus reports)
+  reading `study_config.yaml` and each `define.yaml`; every row opens its source line and
+  each dataset shows its output and whether it is older than the spec or the program.
+- **Fleet commands as tasks** (`type: "fleet"`, listed in _Run Task_, extensible from
+  `tasks.json`): Run Dataset, Check Study, Validate Datasets, Compare with QC (keys
+  prefilled from the spec), Generate Define-XML, Environment Doctor, New Study.
+- **Spec ↔ code navigation**: hover and Go to Definition on quoted variable names in Python
+  programs; Run / Compare / Program code lenses on every dataset in `define.yaml`.
+- **Questions for Fleet over `fleet mcp --stdio`**: What Changes Downstream? (rerun exactly
+  the datasets Fleet lists), Show Execution Order, and Check Dataset Against Spec with the
+  findings as Problems on the spec lines concerned.
+- **Copilot**: each study's MCP server registered through VS Code's MCP provider API.
+- Script-free HTML report preview beside the editor, with Open in Browser for the faithful
+  rendering; reports offered as soon as a comparison, validation or Define-XML task ends.
+- **Run Doctor** offered when the language server fails to start.
 - `fleet.server.path` setting, taking precedence over every other discovery step.
 - `fleet.trace.server` setting and the **Fleet CDISC: Restart Language Server** command.
 - Minimum Fleet version enforced from the `initialize` handshake: a lower major refuses,
@@ -34,6 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Minimum VS Code raised to 1.101, the first release with the MCP server definition API.
+- The committed fixture now carries a `study_config.yaml` and a `programs/sdtm/` program,
+  so the Extension Host tests cover the workbench.
 - `FLEET_LSP` now ranks below `fleet.server.path` and above the workspace virtualenv.
 - Minimum Fleet raised to `0.1.1`; the published `0.1.0` carries no language server.
 

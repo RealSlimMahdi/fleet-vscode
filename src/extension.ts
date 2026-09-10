@@ -1,8 +1,8 @@
-// Fleet CDISC — VS Code shell around `fleet lsp --stdio`.
+// Fleet CDISC — VS Code shell around `fleet lsp --stdio`, plus the study
+// workbench (src/workbench.ts) that drives the `fleet` CLI and MCP server.
 //
-// The extension is a thin launcher: all semantic logic (diagnostics,
-// completions, hover) lives in the Python language server shipped with
-// the fleet-cdisc package (`lsp` extra).
+// All semantic logic (diagnostics, completions, hover, DAGs, conformance)
+// lives in the fleet-cdisc package; this extension only launches and shows.
 
 import type { ExtensionContext, OutputChannel } from "vscode";
 import { commands, window, workspace } from "vscode";
@@ -12,6 +12,7 @@ import { LanguageClient } from "vscode-languageclient/node";
 import type { ServerCommand } from "./server.ts";
 import { describeSource, discoverServer } from "./server.ts";
 import { checkFleetVersion } from "./version.ts";
+import { registerWorkbench } from "./workbench.ts";
 
 // vscode-languageclient reads `<id>.trace.server`, so the client id has to
 // be the settings section for `fleet.trace.server` to reach it.
@@ -20,6 +21,7 @@ const RESTART_COMMAND = "fleet.restartServer";
 
 const SHOW_LOG = "Show Log";
 const OPEN_SETTINGS = "Open Settings";
+const RUN_DOCTOR = "Run Doctor";
 
 let client: LanguageClient | undefined;
 let channel: OutputChannel | undefined;
@@ -28,6 +30,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   // Owned by the extension rather than the client, so it survives restarts
   // and still holds the reason when the server never came up.
   channel = window.createOutputChannel("Fleet CDISC");
+  registerWorkbench(context, channel);
   context.subscriptions.push(
     channel,
     commands.registerCommand(RESTART_COMMAND, async () => {
@@ -111,8 +114,10 @@ function reportStartFailure(server: ServerCommand, error: unknown): void {
 }
 
 async function showError(message: string): Promise<void> {
-  const choice = await window.showErrorMessage(message, SHOW_LOG, OPEN_SETTINGS);
-  if (choice === SHOW_LOG) {
+  const choice = await window.showErrorMessage(message, RUN_DOCTOR, SHOW_LOG, OPEN_SETTINGS);
+  if (choice === RUN_DOCTOR) {
+    await commands.executeCommand("fleet.doctor");
+  } else if (choice === SHOW_LOG) {
     channel?.show();
   } else if (choice === OPEN_SETTINGS) {
     await commands.executeCommand("workbench.action.openSettings", `${SECTION}.server.path`);

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { describeSource, discoverServer } from "../src/server.ts";
+import { describeSource, discoverFleetCommand, discoverServer } from "../src/server.ts";
 
 const never = () => false;
 const always = () => true;
@@ -120,5 +120,25 @@ describe("describeSource", () => {
     assert.match(describeSource("environment"), /FLEET_LSP/);
     assert.match(describeSource("workspace"), /virtual environment/);
     assert.match(describeSource("runner"), /uv run fleet/);
+  });
+});
+
+describe("discoverFleetCommand", () => {
+  it("reuses the configured executable with other arguments", () => {
+    assert.deepEqual(
+      discoverFleetCommand(["run", "--dataset", "DM"], { configuredPath: "/tools/fleet" }),
+      { command: "/tools/fleet", args: ["run", "--dataset", "DM"], source: "setting" },
+    );
+  });
+
+  it("keeps uv's prefix and passes arguments through untouched", () => {
+    assert.deepEqual(
+      discoverFleetCommand(["run", "--dataset", "DM; echo unsafe"], { env: {}, exists: never }),
+      {
+        command: "uv",
+        args: ["run", "fleet", "run", "--dataset", "DM; echo unsafe"],
+        source: "runner",
+      },
+    );
   });
 });

@@ -21,3 +21,5 @@ AGENTS.md
 CONTRIBUTING.md
 skills-lock.json
 **/*.map
+docs/**
+.ruff_cache/**

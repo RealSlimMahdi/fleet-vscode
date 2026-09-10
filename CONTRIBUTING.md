@@ -5,7 +5,7 @@
 - **Node ≥ 22.18.0** (see `.nvmrc`). Unit tests run raw `.ts` through `node --test`, which
   needs the type stripping that became default in 22.18. Below that floor they fail outright.
 - **npm** — never pnpm or yarn.
-- VS Code ≥ 1.82.
+- VS Code ≥ 1.101.
 
 ## Getting started
 
@@ -59,10 +59,11 @@ Two things still gate the first real release:
 
 ## The fixture
 
-`fixture/metadata/sdtm/define.yaml` is **generated, never hand-edited**. `npm run fixture`
-slices it out of the canonical study — the sibling `../test-study` by default, or whatever
-`FLEET_STUDY` points at — keeping three codelists and the first six variables of the first
-domain.
+`fixture/` is **generated, never hand-edited**. `npm run fixture` slices it out of the
+canonical study — the sibling `../test-study` by default, or whatever `FLEET_STUDY` points
+at: `metadata/sdtm/define.yaml` keeps three codelists and the first six variables of the
+first domain, `study_config.yaml` keeps the identity and paths, and `programs/sdtm/` holds
+a one-chain program naming one of those variables so spec ↔ code navigation has a target.
 
 Because the slice is faithful, the fixture carries the canonical study's own schema
 problems: two `origin: CRF` values outside the Define-XML enumeration and two blocks with
@@ -92,10 +93,10 @@ Recorded against `fleet-cdisc` 0.1.1 on macOS. A target is verified when the ser
 diagnostics arrive, and typing `algorithm:` under a `derivation:` block offers the
 standard's algorithms with hover documentation.
 
-| Target          | Server                      | Diagnostics | `algorithm:` completions | Hover                    |
-| --------------- | --------------------------- | ----------- | ------------------------ | ------------------------ |
-| `fixture`       | `fleet.server.path`         | 4           | 16 SDTM algorithms       | summary + parameter list |
-| `../test-study` | workspace `.venv/bin/fleet` | 145         | 30 ADaM algorithms       | summary + parameter list |
+| Target          | Server                      | Diagnostics | `algorithm:` completions | Hover                    | Workbench                                      |
+| --------------- | --------------------------- | ----------- | ------------------------ | ------------------------ | ---------------------------------------------- |
+| `fixture`       | `fleet.server.path`         | 4           | 16 SDTM algorithms       | summary + parameter list | tree, lenses, hover; tasks need a `fleet`      |
+| `../test-study` | workspace `.venv/bin/fleet` | 145         | 30 ADaM algorithms       | summary + parameter list | everything; MCP questions need the `mcp` extra |
 
 The fixture has no Python project of its own, so a bare clone gets activation but no live
 server until you set `fleet.server.path` (or export `FLEET_LSP`). `../test-study` needs

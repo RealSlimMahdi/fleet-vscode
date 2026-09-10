@@ -1,4 +1,4 @@
-// Slices the canonical Fleet study's define.yaml down to the committed fixture.
+// Slices the canonical Fleet study down to the committed fixture.
 //
 // The fixture is generated, never hand-edited: rerun `npm run fixture` after the
 // canonical study changes. Point FLEET_STUDY at a different checkout to reslice
@@ -12,8 +12,7 @@ import { parse, stringify } from "yaml";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const study = process.env.FLEET_STUDY ?? resolve(root, "..", "test-study");
-const source = resolve(study, "metadata", "sdtm", "define.yaml");
-const target = resolve(root, "fixture", "metadata", "sdtm", "define.yaml");
+const fixture = resolve(root, "fixture");
 
 // Fleet reads specs with PyYAML, which is YAML 1.1: round-tripping at 1.2
 // would unquote `"2023-12-15"` into a timestamp and invent a schema error the
@@ -25,23 +24,73 @@ const DIALECT = { version: "1.1" };
 const CODELISTS = 3;
 const VARIABLES = 6;
 
-const spec = parse(readFileSync(source, "utf8"), DIALECT);
+const GENERATED = "generated, do not edit.";
+
+// ── metadata/sdtm/define.yaml ──────────────────────────────────────────────
+
+const specSource = resolve(study, "metadata", "sdtm", "define.yaml");
+const spec = parse(readFileSync(specSource, "utf8"), DIALECT);
 const [dataset] = spec.datasets;
 
-const header = [
-  "# Fixture for the Extension Development Host — generated, do not edit.",
-  `# Regenerate with \`npm run fixture\` (slices ${CODELISTS} codelists and the`,
-  `# first ${VARIABLES} ${dataset.name} variables out of the canonical study).`,
-  "",
-].join("\n");
+write(
+  resolve(fixture, "metadata", "sdtm", "define.yaml"),
+  [
+    `# Fixture for the Extension Development Host — ${GENERATED}`,
+    `# Regenerate with \`npm run fixture\` (slices ${CODELISTS} codelists and the`,
+    `# first ${VARIABLES} ${dataset.name} variables out of the canonical study).`,
+    "",
+  ].join("\n") +
+    stringify(
+      {
+        study: spec.study,
+        codelists: spec.codelists.slice(0, CODELISTS),
+        datasets: [{ ...dataset, variables: dataset.variables.slice(0, VARIABLES) }],
+      },
+      DIALECT,
+    ),
+  specSource,
+);
 
-const fixture = {
-  study: spec.study,
-  codelists: spec.codelists.slice(0, CODELISTS),
-  datasets: [{ ...dataset, variables: dataset.variables.slice(0, VARIABLES) }],
-};
+// ── study_config.yaml ──────────────────────────────────────────────────────
+// Identity and paths only: what the workbench needs to find the spec, the
+// outputs and the programs. IG versions and domain lists stay out.
 
-mkdirSync(dirname(target), { recursive: true });
-writeFileSync(target, header + stringify(fixture, DIALECT), "utf8");
+const configSource = resolve(study, "study_config.yaml");
+const config = parse(readFileSync(configSource, "utf8"), DIALECT);
 
-console.log(`Wrote ${target} from ${source}`);
+write(
+  resolve(fixture, "study_config.yaml"),
+  `# Fixture for the Extension Development Host — ${GENERATED}\n` +
+    stringify({ study_id: config.study_id, paths: config.paths }, DIALECT),
+  configSource,
+);
+
+// ── programs/sdtm/<dataset>.py ─────────────────────────────────────────────
+// The program the workbench pairs with the sliced dataset by convention. It
+// names the dataset's third variable, so spec ↔ code navigation has a target.
+
+const variable = dataset.variables[2].name;
+write(
+  resolve(fixture, config.paths.programs_sdtm, `${dataset.name.toLowerCase()}.py`),
+  [
+    `# Fixture for the Extension Development Host — ${GENERATED}`,
+    "# %%",
+    "import fleet",
+    "import polars as pl",
+    "",
+    "# %%",
+    `${dataset.name.toLowerCase()} = (`,
+    `    fleet.frame(pl.read_csv("../../data/raw/${dataset.name.toLowerCase()}_raw.csv"))`,
+    `    .sdtm.assign("${variable}", source="subject_id")`,
+    "    .to_frame()",
+    ")",
+    "",
+  ].join("\n"),
+  specSource,
+);
+
+function write(target, content, source) {
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, content, "utf8");
+  console.log(`Wrote ${target} from ${source}`);
+}

@@ -1,7 +1,9 @@
 # fleet-vscode — Agent Instructions
 
 The VS Code client for [Fleet](https://github.com/RealSlimMahdi/fleet-cdisc). A thin
-TypeScript launcher for the Python language server — **not** a place for clinical logic.
+TypeScript shell around the Python language server, the `fleet` CLI and `fleet mcp` —
+**not** a place for clinical logic. [docs/workbench.md](docs/workbench.md) records what
+was kept, dropped and deferred, and why.
 
 ## Hard Rules
 
@@ -25,20 +27,29 @@ TypeScript:
 
 ## Layout
 
-| Path                        | Holds                                                              |
-| --------------------------- | ------------------------------------------------------------------ |
-| `src/extension.ts`          | `activate` / `deactivate`, `LanguageClient` construction, error UX |
-| `src/server.ts`             | `discoverServer()` — pure, exported, **no `vscode` import**        |
-| `src/version.ts`            | Minimum-Fleet contract — pure, **no `vscode` import**              |
-| `test/`                     | `node --test` units over `src/server.ts` and `src/version.ts`      |
-| `integration/`              | Extension Host tests, compiled to `out/integration/`               |
-| `fixture/`                  | Generated study workspace — **never hand-edit**                    |
-| `scripts/build-fixture.mjs` | Reslices `fixture/` from the canonical study                       |
-| `scripts/vsix.ts`           | What a shippable `.vsix` must contain — unit-tested                |
-| `scripts/fleet-release.ts`  | The publication gate: Fleet must ship the `lsp` extra              |
+| Path                        | Holds                                                                            |
+| --------------------------- | -------------------------------------------------------------------------------- |
+| `src/extension.ts`          | `activate` / `deactivate`, `LanguageClient` construction, error UX               |
+| `src/server.ts`             | `discoverServer()` — pure, exported, **no `vscode` import**                      |
+| `src/version.ts`            | Minimum-Fleet contract — pure, **no `vscode` import**                            |
+| `src/spec.ts`               | `study_config.yaml` / `define.yaml` structure and positions — pure               |
+| `src/mcp.ts`                | One `fleet mcp --stdio` tool call — pure                                         |
+| `src/study.ts`              | The study's files and `fleet` command as VS Code sees them                       |
+| `src/tree.ts`               | The Fleet view                                                                   |
+| `src/navigation.ts`         | Hover / definition in Python, code lenses in `define.yaml`                       |
+| `src/tasks.ts`              | `fleet` task provider and `runFleet()`                                           |
+| `src/workbench.ts`          | Commands, MCP questions, Copilot registration, report preview                    |
+| `test/`                     | `node --test` units over the pure modules (`test/support/` is a real MCP server) |
+| `integration/`              | Extension Host tests, compiled to `out/integration/`                             |
+| `fixture/`                  | Generated study workspace — **never hand-edit**                                  |
+| `scripts/build-fixture.mjs` | Reslices `fixture/` from the canonical study                                     |
+| `scripts/vsix.ts`           | What a shippable `.vsix` must contain — unit-tested                              |
+| `scripts/fleet-release.ts`  | The publication gate: Fleet must ship the `lsp` extra                            |
 
-`src/server.ts` and `src/version.ts` staying free of `vscode` is what makes them
-unit-testable outside the Extension Host. Keep it that way. The two test trees are
+`src/server.ts`, `src/version.ts`, `src/spec.ts` and `src/mcp.ts` staying free of `vscode`
+is what makes them unit-testable outside the Extension Host. Keep it that way. Everything
+Fleet knows (algorithms, DAGs, conformance) is asked of the installed package: the CLI as a
+task, `fleet mcp` for structured answers. Never reimplement it in TypeScript. The two test trees are
 separate because `node --test` runs raw TypeScript while `@vscode/test-cli` needs
 compiled output.
 

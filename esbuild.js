@@ -10,8 +10,8 @@ const options = {
   outfile: "out/extension.js",
   format: "cjs",
   platform: "node",
-  // Oldest Electron runtime behind engines.vscode ^1.82.0.
-  target: "node18",
+  // Oldest Electron runtime behind engines.vscode ^1.101.0.
+  target: "node20",
   // Supplied by the Extension Host, never bundled.
   external: ["vscode"],
   sourcemap: !production,
