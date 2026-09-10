@@ -3,7 +3,7 @@
 // Only structure and source positions are read here — no clinical meaning.
 // Never import `vscode`: this runs under `node --test`.
 
-import { isMap, isScalar, isSeq, LineCounter, parseDocument } from "yaml";
+import { isMap, isNode, isScalar, isSeq, LineCounter, parseDocument, stringify } from "yaml";
 import type { YAMLMap } from "yaml";
 
 export interface StudyConfig {
@@ -19,6 +19,12 @@ export interface SpecVariable {
   line: number;
   /** The variable's YAML block as written, dedented — shown verbatim on hover. */
   stanza: string;
+  /** Character offsets [start, end) of the variable's YAML map. */
+  range: [number, number];
+  /** Column of the variable's keys. */
+  indent: number;
+  /** Offsets [start, end) of its `derivation:` entry, when declared. */
+  derivation?: [number, number];
 }
 
 export interface SpecDataset {
@@ -83,12 +89,16 @@ export function parseSpec(text: string): SpecDataset[] {
           ? variables.items.flatMap((variable) => {
               const variableName = isMap(variable) ? named(variable) : undefined;
               if (!isMap(variable) || !variableName) return [];
+              const [start, end] = variable.range ?? [0, 0];
               return [
                 {
                   name: variableName,
                   label: label(variable),
                   line: lineOf(lines, variable),
                   stanza: stanza(text, lines, variable),
+                  range: [start, end],
+                  indent: lines.linePos(start).col - 1,
+                  derivation: pairRange(variable, "derivation"),
                 },
               ];
             })
@@ -96,6 +106,88 @@ export function parseSpec(text: string): SpecDataset[] {
       },
     ];
   });
+}
+
+/** A derivation block Fleet produced for one variable. */
+export interface DerivationRow {
+  name: string;
+  block: Record<string, unknown>;
+  label?: string;
+}
+
+export interface TextEdit {
+  start: number;
+  end: number;
+  text: string;
+}
+
+export interface DerivationEdits {
+  edits: TextEdit[];
+  /** Variables whose existing `derivation:` was replaced. */
+  updated: string[];
+  /** Declared variables that gained a `derivation:`. */
+  added: string[];
+  /** Variables appended to the dataset because the spec did not declare them. */
+  appended: string[];
+}
+
+/**
+ * Edits that put Fleet's derivation blocks into *dataset*'s stanzas: an
+ * existing `derivation:` is replaced, a declared variable gains one, and
+ * an undeclared variable is appended with placeholders for the metadata
+ * only a reviewer can supply. Everything else in the file stays as written.
+ */
+export function derivationEdits(
+  text: string,
+  dataset: SpecDataset,
+  rows: DerivationRow[],
+): DerivationEdits {
+  const last = dataset.variables.at(-1);
+  if (!last) throw new Error(`${dataset.name} declares no variables to place derivations in.`);
+  const result: DerivationEdits = { edits: [], updated: [], added: [], appended: [] };
+  const tail: string[] = [];
+  for (const row of rows) {
+    const variable = dataset.variables.find((entry) => entry.name === row.name);
+    if (variable?.derivation) {
+      const [start, end] = variable.derivation;
+      result.edits.push({
+        start,
+        end: contentEnd(text, end),
+        text: block(row.block, variable.indent),
+      });
+      result.updated.push(row.name);
+    } else if (variable) {
+      const at = contentEnd(text, variable.range[1]);
+      result.edits.push({
+        start: at,
+        end: at,
+        text: `\n${pad(variable.indent)}${block(row.block, variable.indent)}`,
+      });
+      result.added.push(row.name);
+    } else {
+      tail.push(
+        `${pad(last.indent - 2)}- name: ${row.name}\n` +
+          `${pad(last.indent)}label: ${row.label ?? row.name} # TODO: not declared before — review label, type and origin\n` +
+          `${pad(last.indent)}${block(row.block, last.indent)}`,
+      );
+      result.appended.push(row.name);
+    }
+  }
+  if (tail.length) {
+    const at = contentEnd(text, last.range[1]);
+    result.edits.push({ start: at, end: at, text: `\n${tail.join("\n")}` });
+  }
+  return result;
+}
+
+/** Apply offset edits, latest first so earlier offsets stay valid. */
+export function applyEdits(text: string, edits: TextEdit[]): string {
+  return [...edits]
+    .sort((left, right) => right.start - left.start)
+    .reduce(
+      (result, edit) => result.slice(0, edit.start) + edit.text + result.slice(edit.end),
+      text,
+    );
 }
 
 /** Configured standards, derived from `metadata_<standard>` keys in `paths:`. */
@@ -138,6 +230,34 @@ function label(map: YAMLMap): string | undefined {
 function strings(value: unknown): string[] {
   const list: unknown = isSeq(value) ? value.toJSON() : value;
   return Array.isArray(list) ? list.filter((item): item is string => typeof item === "string") : [];
+}
+
+/** `derivation:` rendered for a stanza whose keys sit at *indent*; the first line carries none. */
+function block(derivation: Record<string, unknown>, indent: number): string {
+  // YAML 1.1, as PyYAML reads it: a mapping value like "Y" or "No" must be quoted.
+  return stringify({ derivation }, { version: "1.1", lineWidth: 0 })
+    .trimEnd()
+    .split("\n")
+    .map((line, index) => (index ? pad(indent) + line : line))
+    .join("\n");
+}
+
+/** A node's end offset can include its trailing newline; step back to the last character. */
+function contentEnd(text: string, offset: number): number {
+  let end = offset;
+  while (end > 0 && /\s/.test(text[end - 1])) end--;
+  return end;
+}
+
+function pad(width: number): string {
+  return " ".repeat(Math.max(0, width));
+}
+
+function pairRange(map: YAMLMap, key: string): [number, number] | undefined {
+  const pair = map.items.find((entry) => isScalar(entry.key) && entry.key.value === key);
+  const start = isScalar(pair?.key) ? pair.key.range?.[0] : undefined;
+  const end = isNode(pair?.value) ? pair.value.range?.[1] : undefined;
+  return start !== undefined && end !== undefined ? [start, end] : undefined;
 }
 
 function lineOf(lines: LineCounter, map: YAMLMap): number {

@@ -62,13 +62,14 @@ Two things still gate the first real release:
 `fixture/` is **generated, never hand-edited**. `npm run fixture` slices it out of the
 canonical study — the sibling `../test-study` by default, or whatever `FLEET_STUDY` points
 at: `metadata/sdtm/define.yaml` keeps three codelists and the first six variables of the
-first domain, `study_config.yaml` keeps the identity and paths, and `programs/sdtm/` holds
-a one-chain program naming one of those variables so spec ↔ code navigation has a target.
+first two domains, `study_config.yaml` keeps the identity and paths, and `programs/sdtm/`
+holds a one-chain program for the second domain naming a variable both domains declare, so
+spec ↔ code navigation has a target and a wrong answer it must avoid.
 
 Because the slice is faithful, the fixture carries the canonical study's own schema
-problems: two `origin: CRF` values outside the Define-XML enumeration and two blocks with
-unexpected `cosmos` properties. Those four diagnostics lighting up is the fastest proof
-that the language server is running.
+problems: four `origin: CRF` values outside the Define-XML enumeration and three blocks
+with unexpected `cosmos` properties. Those seven diagnostics lighting up is the fastest
+proof that the language server is running.
 
 ## Running against a Fleet study
 
@@ -95,7 +96,7 @@ standard's algorithms with hover documentation.
 
 | Target          | Server                      | Diagnostics | `algorithm:` completions | Hover                    | Workbench                                      |
 | --------------- | --------------------------- | ----------- | ------------------------ | ------------------------ | ---------------------------------------------- |
-| `fixture`       | `fleet.server.path`         | 4           | 16 SDTM algorithms       | summary + parameter list | tree, lenses, hover; tasks need a `fleet`      |
+| `fixture`       | `fleet.server.path`         | 7           | 16 SDTM algorithms       | summary + parameter list | tree, lenses, hover; tasks need a `fleet`      |
 | `../test-study` | workspace `.venv/bin/fleet` | 145         | 30 ADaM algorithms       | summary + parameter list | everything; MCP questions need the `mcp` extra |
 
 The fixture has no Python project of its own, so a bare clone gets activation but no live

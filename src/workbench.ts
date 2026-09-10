@@ -10,6 +10,8 @@ import * as vscode from "vscode";
 
 import { callTool, names } from "./mcp.ts";
 import { registerNavigation } from "./navigation.ts";
+import type { DerivationRow } from "./spec.ts";
+import { derivationEdits, parseSpec } from "./spec.ts";
 import type { DatasetRef, Standard, Study } from "./study.ts";
 import {
   datasetsOf,
@@ -40,6 +42,18 @@ interface DatasetCheck {
   errors?: string[];
   warnings?: string[];
   info?: string[];
+}
+
+/** One row of `fleet_code_to_spec`. */
+interface ConvertedCall {
+  name: string;
+  verb: string;
+  standard: string;
+  line: number;
+  status: "ok" | "stub" | "unsupported" | "unknown";
+  block: Record<string, unknown> | null;
+  reason: string;
+  meta: { label?: string };
 }
 
 const DATASET_FILES = { Datasets: ["parquet", "csv", "xpt", "sas7bdat"] };
@@ -272,12 +286,88 @@ export function registerWorkbench(
     if (!(await stat(program))) {
       const choice = await vscode.window.showInformationMessage(
         `No program at ${relative(study.root, program)} yet.`,
-        "Create It",
+        "Generate from Spec",
+        "Create Empty",
       );
+      if (choice === "Generate from Spec") return generateProgram(ref);
       if (!choice) return;
       await vscode.workspace.fs.writeFile(program, new TextEncoder().encode(skeleton(ref)));
     }
     await vscode.window.showTextDocument(program);
+  });
+
+  register("fleet.programFromSpec", async (arg) => {
+    const picked = await pickDataset(arg);
+    if (picked?.ref) await generateProgram(picked.ref);
+  });
+
+  register("fleet.pushToSpec", async (arg) => {
+    const editor = vscode.window.activeTextEditor;
+    const document =
+      arg instanceof vscode.Uri ? await vscode.workspace.openTextDocument(arg) : editor?.document;
+    if (document?.languageId !== "python")
+      throw new Error("Open the Python program whose derivations should go to the spec.");
+    const selected = editor?.document === document && !editor.selection.isEmpty;
+    const source = selected ? document.getText(editor.selection) : document.getText();
+    const study = await pickStudy(document.uri);
+    if (!study) return;
+    const refs = await datasetsOf(study);
+    const own = path.basename(document.fileName, ".py").toUpperCase();
+    const ref =
+      refs.find((entry) => entry.dataset.name === own) ??
+      (await chooseDataset(refs, `Which dataset does ${path.basename(document.fileName)} build?`));
+    if (!ref) return;
+
+    const rows = calls(
+      await ask(
+        study,
+        "fleet_code_to_spec",
+        { source },
+        `Fleet: reading derivations from ${path.basename(document.fileName)}`,
+      ),
+    ).filter((row) => row.standard === ref.standard.id);
+    // Last derivation of a target wins, as in Fleet's own lineage.
+    const latest = [...new Map(rows.map((row) => [row.name, row])).values()];
+    const usable = latest.flatMap((row): DerivationRow[] =>
+      row.status === "ok" && row.block
+        ? [{ name: row.name, block: row.block, label: row.meta.label }]
+        : [],
+    );
+    const left = latest.filter((row) => row.status !== "ok");
+    for (const row of left)
+      output.appendLine(
+        `${ref.dataset.name}.${row.name} stays inline: ${row.verb}() on line ${row.line}, ${row.reason}.`,
+      );
+    if (!usable.length)
+      throw new Error(
+        `No spec-expressible ${label(ref.standard)} derivation in ${path.basename(document.fileName)}` +
+          (left.length ? ` (${left.length} call(s) stay inline; see the log).` : "."),
+      );
+
+    const spec = await vscode.workspace.openTextDocument(ref.standard.spec);
+    const text = spec.getText();
+    const dataset = parseSpec(text).find((entry) => entry.name === ref.dataset.name);
+    if (!dataset) throw new Error(`${ref.dataset.name} is no longer declared in the spec.`);
+    const result = derivationEdits(text, dataset, usable);
+    const edit = new vscode.WorkspaceEdit();
+    for (const change of result.edits)
+      edit.replace(
+        ref.standard.spec,
+        new vscode.Range(spec.positionAt(change.start), spec.positionAt(change.end)),
+        change.text,
+      );
+    await vscode.workspace.applyEdit(edit);
+    await openSpec(ref);
+    const summary = [
+      `${ref.dataset.name}: ${usable.length} derivation(s) written to ${relative(study.root, ref.standard.spec)}`,
+      result.updated.length ? `${result.updated.length} replaced` : "",
+      result.appended.length ? `${result.appended.length} appended as undeclared variables` : "",
+      left.length ? `${left.length} stay inline: ${left.map((row) => row.name).join(", ")}` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    if (await vscode.window.showInformationMessage(`${summary}.`, ...(left.length ? ["Why?"] : [])))
+      output.show();
   });
 
   register("fleet.preview", async (arg) => {
@@ -349,17 +439,27 @@ async function pickDataset(arg: unknown, allowAll = false): Promise<Picked | und
   if (arg instanceof vscode.Uri)
     refs = refs.filter((ref) => ref.standard.spec.fsPath === arg.fsPath);
   if (!refs.length) throw new Error("No datasets are declared in this study's define.yaml files.");
+  const chosen = await chooseDataset(refs, allowAll ? "Fleet: run" : "Fleet dataset", allowAll);
+  return chosen === undefined ? undefined : { study, ref: chosen ?? undefined };
+}
+
+/** Pick one dataset; `null` means "all of them" when offered, `undefined` a cancel. */
+async function chooseDataset(
+  refs: DatasetRef[],
+  title: string,
+  allowAll = false,
+): Promise<DatasetRef | null | undefined> {
   const items = refs.map((ref) => ({
     label: ref.dataset.name,
     description: describe(ref),
     ref,
   }));
-  const all = { label: "$(run-all) All datasets", description: "in spec order", ref: undefined };
+  const all = { label: "$(run-all) All datasets", description: "in spec order", ref: null };
   const chosen = await vscode.window.showQuickPick(allowAll ? [all, ...items] : items, {
-    title: allowAll ? "Fleet: run" : "Fleet dataset",
+    title,
     matchOnDescription: true,
   });
-  return chosen && { study, ref: chosen.ref };
+  return chosen?.ref;
 }
 
 async function pickStandard(study: Study, arg?: unknown): Promise<Standard | undefined> {
@@ -406,6 +506,43 @@ async function openSpec(ref: DatasetRef): Promise<void> {
 }
 
 // ── asking Fleet ─────────────────────────────────────────────────────────
+
+/** The program Fleet renders from the spec: written when none exists, shown beside it otherwise. */
+async function generateProgram(ref: DatasetRef): Promise<void> {
+  const code = await ask(
+    ref.study,
+    "fleet_spec_to_code",
+    { define_yaml: ref.standard.spec.fsPath, dataset: ref.dataset.name },
+    `Fleet: rendering ${ref.dataset.name} from its spec`,
+  );
+  if (typeof code !== "string") throw new Error("Fleet returned no program text.");
+  const program = programOf(ref);
+  if (program && !(await stat(program))) {
+    await vscode.workspace.fs.writeFile(program, new TextEncoder().encode(code));
+    await vscode.window.showTextDocument(program);
+    return;
+  }
+  const document = await vscode.workspace.openTextDocument({ language: "python", content: code });
+  await vscode.window.showTextDocument(document, { viewColumn: vscode.ViewColumn.Beside });
+}
+
+function calls(value: unknown): ConvertedCall[] {
+  if (!Array.isArray(value) || !value.every(isCall))
+    throw new Error("Fleet returned an unexpected result shape.");
+  return value;
+}
+
+function isCall(value: unknown): value is ConvertedCall {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "name" in value &&
+    "status" in value &&
+    "standard" in value &&
+    "block" in value &&
+    "meta" in value
+  );
+}
 
 function ask(
   study: Study,

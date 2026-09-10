@@ -157,6 +157,18 @@
         "icon": "$(go-to-file)"
       },
       {
+        "command": "fleet.pushToSpec",
+        "title": "Push Derivations to Spec",
+        "category": "Fleet CDISC",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "fleet.programFromSpec",
+        "title": "Generate Program from Spec",
+        "category": "Fleet CDISC",
+        "icon": "$(arrow-down)"
+      },
+      {
         "command": "fleet.preview",
         "title": "Preview Report",
         "category": "Fleet CDISC",
@@ -239,6 +251,11 @@
           "group": "1_qc@3"
         },
         {
+          "command": "fleet.programFromSpec",
+          "when": "view == fleet.study && viewItem == dataset",
+          "group": "1_qc@0"
+        },
+        {
           "command": "fleet.impact",
           "when": "view == fleet.study && viewItem == dataset",
           "group": "2_dag@1"
@@ -279,6 +296,11 @@
           "command": "fleet.defineXml",
           "when": "resourceFilename =~ /^define.*\\.ya?ml$/",
           "group": "navigation@2"
+        },
+        {
+          "command": "fleet.pushToSpec",
+          "when": "resourceLangId == python && fleet.hasStudy",
+          "group": "navigation@1"
         }
       ],
       "commandPalette": [

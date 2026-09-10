@@ -68,6 +68,24 @@ Read-only, answered by `fleet mcp --stdio` (the `mcp` extra); no dataset is exec
   type mismatches, controlled-terminology values) as **Problems** on the spec lines they
   concern.
 
+### Spec ↔ code
+
+The same step written two ways is Fleet's dual workflow; these two commands move steps
+between the ways. Both are static: nothing is executed.
+
+- **Push Derivations to Spec** — from a program (or just the selected chain), Fleet
+  reverse-maps every verb call to its `derivation:` block and the extension writes the
+  blocks into the dataset's stanzas: an existing block is replaced, a declared variable
+  gains one, an undeclared variable is appended with a TODO for its metadata. Calls that
+  only exist inline — Polars expressions, verbs without a spec form — stay in the program
+  and are listed, never approximated.
+- **Generate Program from Spec** — Fleet renders a dataset's derivations as an inline chain,
+  with placeholder loads for its inputs and `.pin()` calls for the datasets it looks up.
+  Written as the dataset's program when none exists, otherwise shown beside it.
+
+These use the `fleet_code_to_spec` and `fleet_spec_to_code` tools, which Fleet gains on its
+`fable/spec-code-conversion` branch.
+
 ### Copilot
 
 Each study's `fleet mcp --stdio` server is registered with VS Code's MCP support

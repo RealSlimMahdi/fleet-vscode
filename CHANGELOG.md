@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Questions for Fleet over `fleet mcp --stdio`**: What Changes Downstream? (rerun exactly
   the datasets Fleet lists), Show Execution Order, and Check Dataset Against Spec with the
   findings as Problems on the spec lines concerned.
+- **Spec ↔ code**: Push Derivations to Spec writes Fleet's reverse-mapped `derivation:`
+  blocks into the right stanzas of `define.yaml`; Generate Program from Spec renders a
+  dataset's derivations as an inline chain (both static, via Fleet's new
+  `fleet_code_to_spec` / `fleet_spec_to_code` tools).
 - **Copilot**: each study's MCP server registered through VS Code's MCP provider API.
 - Script-free HTML report preview beside the editor, with Open in Browser for the faithful
   rendering; reports offered as soon as a comparison, validation or Define-XML task ends.

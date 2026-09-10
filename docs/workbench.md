@@ -52,6 +52,13 @@ Why the extension looks the way it does, and what was deliberately left out. Wri
   raised to 1.101 for it).
 - Output freshness on each dataset row, a report list, an offer to open reports after
   compare / validate / define-xml, a **New Study** bootstrap, and a program skeleton.
+- Spec ↔ code conversion, static in both directions. Fleet's registry already reverse-maps
+  a verb call to a derivation block (`derivation_from_lineage`) and renders the faithful
+  call for a block (`render_formal_expression`); the Fleet branch
+  `fable/spec-code-conversion` exposes them as `fleet_code_to_spec` (AST walk, no
+  execution) and `fleet_spec_to_code`. The extension only places blocks into stanzas
+  (`derivationEdits` in `src/spec.ts`, offset-exact so the rest of the file is untouched)
+  and writes or shows the rendered program. Inline-only calls are reported, never guessed.
 
 ## Waits on Fleet
 
@@ -63,7 +70,8 @@ Proposed contracts, in the order they would unlock the most:
    Until then the impact picker reruns what Fleet lists, in spec order.
 3. **Structured `fleet validate` output** (`--format json`, as `compare` has). Unlocks
    validation findings as Problems, per variable.
-4. **Inline ↔ spec conversion on the introspection surface** (`coverage_matrix`, AST walk,
-   `to_spec_yaml`). Unlocks a preview-diff code action in both directions.
+4. **Conversion from runtime lineage** (`to_spec_yaml` after a run) for the calls static
+   analysis must leave inline — Polars expressions, callables — and a preview diff before
+   the spec is written.
 5. **A bounded dataset preview tool** (first _n_ rows with labels and decodes). Unlocks an
    in-editor grid; until then a parquet viewer extension is the companion.

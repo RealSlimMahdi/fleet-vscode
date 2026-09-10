@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { age, parseSpec, parseStudy, standards } from "../src/spec.ts";
+import { age, applyEdits, derivationEdits, parseSpec, parseStudy, standards } from "../src/spec.ts";
 
 describe("parseStudy", () => {
   it("applies Fleet's defaults under the configured paths", () => {
@@ -105,5 +105,84 @@ describe("age", () => {
     assert.equal(age(now - 5 * 60_000, now), "5 min ago");
     assert.equal(age(now - 3 * 3_600_000, now), "3 h ago");
     assert.equal(age(now - 2 * 24 * 3_600_000, now), "2 d ago");
+  });
+});
+
+const DECLARED = `datasets:
+  - name: AE
+    variables:
+      - name: DOMAIN
+        label: Domain Abbreviation
+        type: text
+      - name: AESER
+        label: Serious Event
+        type: text
+        derivation:
+          algorithm: assign_no_ct
+          source: serious
+      - name: AESEV
+        label: Severity
+        type: text
+  - name: DM
+    variables:
+      - name: DOMAIN
+        type: text
+`;
+
+describe("derivationEdits", () => {
+  const rows = [
+    { name: "DOMAIN", block: { algorithm: "hardcode_no_ct", value: "AE" } },
+    {
+      name: "AESER",
+      block: { algorithm: "assign_ct", source: "serious", ct_mapping: { Yes: "Y", No: "N" } },
+    },
+    { name: "AEACN", block: { algorithm: "assign_no_ct", source: "action" } },
+  ];
+
+  it("places blocks in the right stanzas and reports what it did", () => {
+    const [ae] = parseSpec(DECLARED);
+    const result = derivationEdits(DECLARED, ae, rows);
+
+    assert.deepEqual(
+      { updated: result.updated, added: result.added, appended: result.appended },
+      { updated: ["AESER"], added: ["DOMAIN"], appended: ["AEACN"] },
+    );
+    const text = applyEdits(DECLARED, result.edits);
+    const [after, dm] = parseSpec(text);
+    assert.deepEqual(
+      after.variables.map((variable) => [variable.name, variable.derivation !== undefined]),
+      [
+        ["DOMAIN", true],
+        ["AESER", true],
+        ["AESEV", false],
+        ["AEACN", true],
+      ],
+    );
+    assert.match(
+      after.variables[0].stanza,
+      /derivation:\n {2}algorithm: hardcode_no_ct\n {2}value: AE$/,
+    );
+    assert.match(
+      after.variables[1].stanza,
+      /label: Serious Event\ntype: text\nderivation:\n {2}algorithm: assign_ct/,
+    );
+    assert.doesNotMatch(after.variables[1].stanza, /assign_no_ct/);
+    assert.match(after.variables[3].stanza, /TODO/);
+    assert.deepEqual(dm.variables[0].derivation, undefined, "the other dataset is untouched");
+  });
+
+  it("quotes values PyYAML would read as booleans", () => {
+    const [ae] = parseSpec(DECLARED);
+    const text = applyEdits(DECLARED, derivationEdits(DECLARED, ae, rows).edits);
+
+    assert.match(text, /"Yes": "Y"/);
+    assert.match(text, /"No": "N"/);
+  });
+
+  it("refuses a dataset with no variables list to anchor on", () => {
+    const [, dm] = parseSpec(
+      "datasets:\n  - name: AE\n    variables: []\n  - name: DM\n    variables: []\n",
+    );
+    assert.throws(() => derivationEdits("", dm, rows), /declares no variables/);
   });
 });

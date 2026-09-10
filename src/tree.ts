@@ -70,7 +70,9 @@ export class StudyTree implements vscode.TreeDataProvider<Item>, vscode.Disposab
 
   async getChildren(item?: Item): Promise<Item[]> {
     if (item) return item.children ? item.children() : [];
-    return (await findStudies()).map((study) => this.studyItem(study));
+    const studies = await findStudies();
+    void vscode.commands.executeCommand("setContext", "fleet.hasStudy", studies.length > 0);
+    return studies.map((study) => this.studyItem(study));
   }
 
   dispose(): void {

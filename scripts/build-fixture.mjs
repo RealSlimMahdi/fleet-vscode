@@ -20,8 +20,10 @@ const fixture = resolve(root, "fixture");
 const DIALECT = { version: "1.1" };
 
 // Enough to exercise codelist completions and one derivation block, small
-// enough to read in a single screen.
+// enough to read in a single screen. Two datasets, so that a name declared in
+// both (USUBJID) has a wrong answer navigation could give.
 const CODELISTS = 3;
+const DATASETS = 2;
 const VARIABLES = 6;
 
 const GENERATED = "generated, do not edit.";
@@ -30,21 +32,24 @@ const GENERATED = "generated, do not edit.";
 
 const specSource = resolve(study, "metadata", "sdtm", "define.yaml");
 const spec = parse(readFileSync(specSource, "utf8"), DIALECT);
-const [dataset] = spec.datasets;
+const datasets = spec.datasets.slice(0, DATASETS);
 
 write(
   resolve(fixture, "metadata", "sdtm", "define.yaml"),
   [
     `# Fixture for the Extension Development Host — ${GENERATED}`,
-    `# Regenerate with \`npm run fixture\` (slices ${CODELISTS} codelists and the`,
-    `# first ${VARIABLES} ${dataset.name} variables out of the canonical study).`,
+    `# Regenerate with \`npm run fixture\` (slices ${CODELISTS} codelists and the first`,
+    `# ${VARIABLES} variables of ${datasets.map((entry) => entry.name).join(" and ")} out of the canonical study).`,
     "",
   ].join("\n") +
     stringify(
       {
         study: spec.study,
         codelists: spec.codelists.slice(0, CODELISTS),
-        datasets: [{ ...dataset, variables: dataset.variables.slice(0, VARIABLES) }],
+        datasets: datasets.map((entry) => ({
+          ...entry,
+          variables: entry.variables.slice(0, VARIABLES),
+        })),
       },
       DIALECT,
     ),
@@ -66,9 +71,11 @@ write(
 );
 
 // ── programs/sdtm/<dataset>.py ─────────────────────────────────────────────
-// The program the workbench pairs with the sliced dataset by convention. It
-// names the dataset's third variable, so spec ↔ code navigation has a target.
+// The program the workbench pairs with the *last* sliced dataset by
+// convention. It names that dataset's third variable, which the first dataset
+// declares too — so navigation must land on the program's own declaration.
 
+const dataset = datasets[datasets.length - 1];
 const variable = dataset.variables[2].name;
 write(
   resolve(fixture, config.paths.programs_sdtm, `${dataset.name.toLowerCase()}.py`),

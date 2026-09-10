@@ -125,11 +125,13 @@ suite("Fleet study workbench", () => {
       .flatMap((hover) => hover.contents)
       .map((content) => (typeof content === "string" ? content : content.value))
       .join("\n");
-    assert.match(text, /EX\.USUBJID/);
+    // Both fixture datasets declare USUBJID; ae.py gets AE's, and only AE's.
+    assert.match(text, /AE\.USUBJID/);
+    assert.doesNotMatch(text, /EX\.USUBJID/);
     assert.match(text, /label: Unique Subject Identifier/);
   });
 
-  test("jumps from a quoted variable to its declaration", async () => {
+  test("jumps from a quoted variable to the program's own dataset, not the first match", async () => {
     await activated();
     const program = await vscode.workspace.openTextDocument(await single("**/programs/sdtm/*.py"));
     const spec = await single("**/define.yaml");
@@ -140,10 +142,13 @@ suite("Fleet study workbench", () => {
       positionOf(program, '"USUBJID"'),
     );
 
+    // One location, so VS Code jumps instead of peeking a position-sorted list.
     assert.equal(locations.length, 1);
     assert.equal(locations[0].uri.toString(), spec.toString());
     const declared = await vscode.workspace.openTextDocument(spec);
-    assert.match(declared.lineAt(locations[0].range.start.line).text, /name: USUBJID/);
+    const line = locations[0].range.start.line;
+    assert.match(declared.lineAt(line).text, /name: USUBJID/);
+    assert.ok(line > positionOf(declared, "- name: AE").line, "landed in EX, the first dataset");
   });
 
   test("lenses every dataset in define.yaml with run, compare and program actions", async () => {
@@ -156,6 +161,7 @@ suite("Fleet study workbench", () => {
     );
 
     const titles = lenses.map((lens) => lens.command?.title);
+    assert.equal(lenses.length, 6, "three lenses per fixture dataset");
     assert.ok(titles.includes("$(play) Run"), titles.join(", "));
     assert.ok(titles.includes("$(diff) Compare with QC"), titles.join(", "));
     assert.ok(titles.includes("$(go-to-file) Program"), titles.join(", "));

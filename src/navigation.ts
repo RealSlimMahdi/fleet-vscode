@@ -18,7 +18,12 @@ export interface VariableMatch {
   variable: SpecVariable;
 }
 
-/** Declarations of *name* across every study, the dataset named like the program first. */
+/**
+ * Declarations of *name*. When the program is named after a dataset that
+ * declares it (`programs/sdtm/ae.py` → AE), only that declaration: VS Code
+ * orders several locations by file position, which would land on the first
+ * dataset's copy instead of the program's own.
+ */
 export async function findVariable(name: string, preferred?: string): Promise<VariableMatch[]> {
   const matches: VariableMatch[] = [];
   for (const study of await findStudies())
@@ -26,8 +31,8 @@ export async function findVariable(name: string, preferred?: string): Promise<Va
       const variable = ref.dataset.variables.find((entry) => entry.name === name);
       if (variable) matches.push({ ref, variable });
     }
-  const rank = (match: VariableMatch) => Number(match.ref.dataset.name === preferred);
-  return matches.sort((left, right) => rank(right) - rank(left));
+  const own = matches.filter((match) => match.ref.dataset.name === preferred);
+  return own.length ? own : matches;
 }
 
 export function registerNavigation(context: vscode.ExtensionContext): void {
