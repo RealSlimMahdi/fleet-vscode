@@ -64,9 +64,18 @@ export function registerWorkbench(
 ): void {
   const tree = new StudyTree();
   const diagnostics = vscode.languages.createDiagnosticCollection("fleet");
+  // `fleet.hasStudy` gates the Python editor-title button, so it must be right
+  // from activation and after every change, whether or not the view is visible.
+  const syncContext = () =>
+    findStudies().then((studies) =>
+      vscode.commands.executeCommand("setContext", "fleet.hasStudy", studies.length > 0),
+    );
+  void syncContext();
   context.subscriptions.push(
     tree,
     diagnostics,
+    tree.onDidChangeTreeData(() => void syncContext()),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => tree.refresh()),
     vscode.window.registerTreeDataProvider("fleet.study", tree),
     vscode.tasks.registerTaskProvider("fleet", new FleetTaskProvider()),
     vscode.tasks.onDidEndTaskProcess((event) => {
