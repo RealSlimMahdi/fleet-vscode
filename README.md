@@ -76,9 +76,11 @@ between the ways. Both are static: nothing is executed.
 - **Push Derivations to Spec** — from a program (or just the selected chain), Fleet
   reverse-maps every verb call to its `derivation:` block and the extension writes the
   blocks into the dataset's stanzas: an existing block is replaced, a declared variable
-  gains one, an undeclared variable is appended with a TODO for its metadata. Calls that
-  only exist inline — Polars expressions, verbs without a spec form — stay in the program
-  and are listed, never approximated.
+  gains one, an undeclared variable is appended with a TODO for its metadata. A study
+  derivation dispatched bare (`.derivation(AGEGR1)`) becomes `algorithm: callable` with the
+  reference the program imports it from. Calls that only exist inline — Polars
+  expressions, verbs without a spec form, unregistered verbs — stay in the program and are
+  listed with the reason, never approximated.
 - **Generate Program from Spec** — Fleet renders a dataset's derivations as an inline chain,
   with placeholder loads for its inputs and `.pin()` calls for the datasets it looks up.
   Written as the dataset's program when none exists, otherwise shown beside it.
