@@ -43,6 +43,13 @@ describe("callTool", () => {
     assert.equal(await call("fleet_impacted_by", { node: "legacy" }), "DM");
   });
 
+  it("reports why the server died instead of a bare connection error", async () => {
+    await assert.rejects(
+      call("fleet_execution_order", {}, { ...server, args: [...server.args, "crash"] }),
+      /^Error: mcp is required for `fleet mcp`\. Install it with: uv sync --extra mcp$/,
+    );
+  });
+
   it("preserves Fleet's own error message", async () => {
     await assert.rejects(call("fleet_impacted_by", { node: "invalid" }), /Missing input: source/);
   });

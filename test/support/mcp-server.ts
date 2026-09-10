@@ -10,6 +10,13 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 const NAMES = ["dm_raw", "DM", "ADSL"];
 const CHECK = { dataset: "DM", is_valid: false, missing_columns: ["AGE"] };
 
+if (process.argv.includes("crash")) {
+  process.stderr.write(
+    "Error: mcp is required for `fleet mcp`. Install it with: uv sync --extra mcp\n",
+  );
+  process.exit(1);
+}
+
 const server = new Server({ name: "fleet-test", version: "1" }, { capabilities: { tools: {} } });
 server.setRequestHandler(ListToolsRequestSchema, () => ({
   tools: process.argv.includes("missing")

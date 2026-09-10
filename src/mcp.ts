@@ -29,8 +29,12 @@ export async function callTool(
   });
   const client = new Client({ name: "fleet-vscode", version: "0.1.0" });
   const options = { signal, timeout: 120_000 };
+  // connect() spawns synchronously, so the listener is in place before any output.
+  const connecting = client.connect(transport, options);
+  const stderr: string[] = [];
+  transport.stderr?.on("data", (chunk: Buffer) => stderr.push(chunk.toString()));
   try {
-    await client.connect(transport, options);
+    await connecting;
     const { tools } = await client.listTools(undefined, options);
     if (!tools.some((entry) => entry.name === tool))
       throw new Error(`Installed Fleet does not provide ${tool}. Update Fleet with the mcp extra.`);
@@ -49,6 +53,12 @@ export async function callTool(
     } catch {
       return text;
     }
+  } catch (error) {
+    // The server died: its last words explain why far better than "Connection closed".
+    const said = stderr.join("").trim().split("\n").at(-1)?.trim();
+    if (said && error instanceof Error && /connection closed/i.test(error.message))
+      throw new Error(said.replace(/^Error:\s*/, ""), { cause: error });
+    throw error;
   } finally {
     await client.close();
   }
